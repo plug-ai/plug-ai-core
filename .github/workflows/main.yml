@@ -5,14 +5,11 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  install:
+  test:
     runs-on: ubuntu-latest
     steps: 
     - uses: actions/checkout@v2
     - name: Install modules
       run: npm ci
-  test:
-    runs-on: ubuntu-latest
-    steps:
     - name: Run tests
       run: npm test
