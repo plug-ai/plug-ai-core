@@ -1,19 +1,59 @@
 name: Publish Package
+
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      # Setup .npmrc file to publish to npm
-      - uses: actions/setup-node@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          node-version: '16.x'
-          registry-url: "https://npm.pkg.github.com"
-      - run: npm ci
-      - run: npm run build
-      - run: npm publish
+          node-version: '14.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: dist
+
+      - name: Authenticate and publish package
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const { Toolkit } = require('actions-toolkit');
+            const path = require('path');
+
+            Toolkit.run(async (tools) => {
+              const packagePath = path.join(tools.workspace, 'dist', 'package.tgz');
+              const registryUrl = 'https://npm.pkg.github.com';
+              const authToken = process.env.GITHUB_TOKEN;
+
+              tools.log.info(`Publishing package from ${packagePath} to ${registryUrl}`);
+
+              await tools.runInWorkspace('npm', [
+                'publish',
+                packagePath,
+                '--registry',
+                registryUrl,
+                '--access',
+                'public',
+              ], { env: { ...process.env, NPM_AUTH_TOKEN: authToken } });
+
+              tools.log.success('Package published successfully');
+            });
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
