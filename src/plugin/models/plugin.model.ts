@@ -8,7 +8,6 @@ export interface RequestHandlerOverwrites {
 export const AuthorizationRequestParams = z.object({
     response_type: z.string(),
     client_id: z.string(),
-    client_secret: z.string(),
     redirect_uri: z.string(),
     audience: z.string().optional(),
     scope: z.string().optional(),

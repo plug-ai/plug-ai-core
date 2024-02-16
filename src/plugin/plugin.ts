@@ -69,8 +69,8 @@ export class Plugin {
         const params = {
             response_type: searchParams.get('response_type'),
             client_id: searchParams.get('client_id'),
-            client_secret: searchParams.get('client_secret'),
             redirect_uri: searchParams.get('redirect_uri'),
+            state: searchParams.get('state'),
         } as AuthorizationRequestParams;
 
         if (this.config.auth.scope) {
@@ -98,15 +98,22 @@ export class Plugin {
     }
 
     private async handleOAuthExchange(req: Request) {
-        const { grant_type, client_id, client_secret, code, redirect_uri } = await req.json();
+
+        const data = await req.formData();
 
         const params = {
-            grant_type,
-            client_id,
-            client_secret,
-            redirect_uri,
-            code,
+            client_secret: process.env.CLIENT_SECRET,
+            grant_type: data.get('grant_type'),
+            client_id: data.get('client_id'),
+            redirect_uri: data.get('redirect_uri'),
+            code: data.get('code'),
         };
+
+        Object.keys(params).forEach((key) => {
+            if (!params[key]) {
+                delete params[key];
+            }
+        });
 
         try {
             OAuthExchangeRequestParams.parse(params);
@@ -124,7 +131,11 @@ export class Plugin {
             },
         });
 
-        return new Response(JSON.stringify(response.data));
+        return new Response(JSON.stringify(response.data), {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
     }
 
     private async handleDocs() {
