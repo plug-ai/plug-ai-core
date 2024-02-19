@@ -102,7 +102,7 @@ export class Plugin {
         const data = await req.formData();
 
         const params = {
-            client_secret: process.env.CLIENT_SECRET,
+            client_secret: data.get('client_secret'),
             grant_type: data.get('grant_type'),
             client_id: data.get('client_id'),
             redirect_uri: data.get('redirect_uri'),
