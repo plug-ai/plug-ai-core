@@ -1,39 +1,26 @@
 import { z } from 'zod';
-import { ManifestAuthType, HttpAuthorizationType } from './plugin-manifest.model';
+import { PluginAuthType, HttpAuthorizationType } from './plugin-auth.model';
 
 export const OpenAPIConfig = z.object({
     paths: z.record(z.any()),
     openapi: z.string(),
     info: z.object({ title: z.string(), version: z.string() }),
+    servers: z.array(z.any())
 });
 
 export const AIPlugConfig = z.object({
-    info: z.object({
-        name: z.object({
-            human: z.string(),
-            model: z.string(),
-        }),
-        description: z.object({
-            human: z.string(),
-            model: z.string(),
-        }),
-        logo_url: z.string(),
-        contact_email: z.string(),
-        legal_info_url: z.string(),
-    }),
     auth: z.object({
-        type: z.nativeEnum(ManifestAuthType),
+        type: z.nativeEnum(PluginAuthType),
         client_url: z.string(),
         authorization_url: z.string(),
         authorization_content_type: z.string(),
-        verification_tokens: z.object({ openai: z.string() }).optional(),
         authorization_type: z.nativeEnum(HttpAuthorizationType).optional(),
         scope: z.string().optional(),
     }),
     api: z.object({
         type: z.string(),
         url: z.string(),
-        getDocs: z.function().returns(z.promise(OpenAPIConfig)),
+        getDocs: z.function().args(z.any()).returns(z.promise(OpenAPIConfig)),
     }),
 });
 
@@ -56,7 +43,7 @@ export interface AIPlugInitConfig {
         legal_info_url: string;
     };
     auth: {
-        type: ManifestAuthType;
+        type: PluginAuthType;
         scope: string;
         verification_tokens: {
             openai: string;
@@ -66,6 +53,6 @@ export interface AIPlugInitConfig {
 }
 
 export interface ClientConfig {
-    configFilePath: string;
-    getDocs: () => Promise<OpenAPIConfig>;
+    authConfig: PluginAuthType;
+    getDocs: (authType: PluginAuthType) => Promise<OpenAPIConfig>;
 }

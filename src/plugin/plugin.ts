@@ -4,10 +4,6 @@ import {
     AIPlugConfig,
     AuthorizationRequestParams,
     ClientConfig,
-    Manifest,
-    ManifestAuth,
-    ManifestAuthType,
-    ManifestSchemaVersion,
     OAuthExchangeRequestParams,
     RequestHandlerOverwrites,
 } from './models';
@@ -17,7 +13,7 @@ export class Plugin {
     private config: AIPlugConfig = {} as any;
 
     constructor(clientConfig: ClientConfig, private overwrites?: RequestHandlerOverwrites) {
-        this.config = getConfig(clientConfig.configFilePath, clientConfig.getDocs);
+        this.config = getConfig(clientConfig.authConfig, clientConfig.getDocs);
     }
 
     async handlePluginPaths(req: Request, res: Response): Promise<any> {
@@ -35,10 +31,6 @@ export class Plugin {
 
         if (pathname === this.config.api.url) {
             return this.handleDocs();
-        }
-
-        if (pathname === '/api/plugin/.well-known/ai-plugin.json') {
-            return this.handleManifest();
         }
 
         return new Response('Looks like there is nothing here.', {
@@ -139,10 +131,10 @@ export class Plugin {
     }
 
     private async handleDocs() {
-        const documentation = await this.config.api.getDocs();
+        const documentation = await this.config.api.getDocs(this.config.auth.type);
 
+        console.log(documentation)
         // remove empty objects like components: {} from the documentation
-
         Object.keys(documentation).forEach((key) => {
             if (Object.keys(documentation[key]).length === 0) {
                 delete documentation[key];
@@ -150,50 +142,5 @@ export class Plugin {
         });
 
         return new Response(JSON.stringify(documentation));
-    }
-
-    private handleManifest() {
-        const manifest: Manifest = {
-            schema_version: ManifestSchemaVersion.v1,
-            name_for_human: this.config.info.name.human,
-            name_for_model: this.config.info.name.model,
-            description_for_human: this.config.info.description.human,
-            description_for_model: this.config.info.description.model,
-            auth: this.getManifestAuthField(),
-            api: {
-                type: 'openapi',
-                url: this.config.api.url,
-            },
-            logo_url: this.config.info.logo_url,
-            contact_email: this.config.info.contact_email,
-            legal_info_url: this.config.info.legal_info_url,
-        };
-
-        const response = JSON.stringify(manifest);
-        return new Response(response);
-    }
-
-    private getManifestAuthField(): ManifestAuth {
-        switch (this.config.auth.type) {
-            case ManifestAuthType.OAuth:
-                return {
-                    ...this.configuration.auth,
-                } as ManifestAuth;
-            case ManifestAuthType.ServiceHttp:
-                return {
-                    type: this.configuration.auth.type,
-                    verification_tokens: this.configuration.auth.verification_tokens,
-                    authorization_type: this.configuration.auth.authorization_type,
-                } as ManifestAuth;
-            case ManifestAuthType.None:
-                return {
-                    type: this.config.auth.type,
-                } as ManifestAuth;
-            default: {
-                return {
-                    type: ManifestAuthType.None,
-                } as ManifestAuth;
-            }
-        }
     }
 }

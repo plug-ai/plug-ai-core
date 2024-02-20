@@ -1,20 +1,14 @@
 import { PLUGIN_CONFIG } from './plugin.config';
-import { AIPlugConfig, AIPlugInitConfig, OpenAPIConfig } from './models';
-import { readFileSync } from 'fs';
-import { load } from 'js-yaml';
-import path from 'path';
+import { AIPlugConfig, PluginAuthType, OpenAPIConfig } from './models';
 
-export function getConfig(pathToConfig: string, getApiDocs: () => Promise<OpenAPIConfig>): AIPlugConfig {
+export function getConfig(authType: PluginAuthType, getApiDocs: (authType: PluginAuthType) => Promise<OpenAPIConfig>): AIPlugConfig {
     try {
-        const yaml = readFileSync(path.resolve(process.cwd(), pathToConfig), 'utf8');
-        const clientConfig = load(yaml) as AIPlugInitConfig;
         const defaultConfig = PLUGIN_CONFIG;
 
         const config = {
-            ...clientConfig,
             auth: {
-                ...clientConfig.auth,
                 ...defaultConfig.auth,
+                type: authType
             },
             api: {
                 ...defaultConfig.api,

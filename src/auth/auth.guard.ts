@@ -1,8 +1,8 @@
 import * as jwt from 'jsonwebtoken';
-import { ManifestAuthType } from '../plugin';
+import { PluginAuthType } from '../plugin';
 
-export const canAccessOAuthProtectedRoute = (req: Request, authType: ManifestAuthType): boolean => {
-    if (authType === ManifestAuthType.OAuth) {
+export const canAccessOAuthProtectedRoute = (req: Request, authType: PluginAuthType): boolean => {
+    if (authType === PluginAuthType.OAuth) {
         const certificate_encoded = process.env.PUBLIC_KEY;
 
         if (!certificate_encoded) {
@@ -28,8 +28,8 @@ export const canAccessOAuthProtectedRoute = (req: Request, authType: ManifestAut
     }
 };
 
-export const canAccessServiceAuthProtectedRoute = (req: Request, authType: ManifestAuthType): boolean => {
-    if (authType === ManifestAuthType.ServiceHttp) {
+export const canAccessServiceAuthProtectedRoute = (req: Request, authType: PluginAuthType): boolean => {
+    if (authType === PluginAuthType.ServiceHttp) {
         const service_auth_key = process.env.SERVICE_AUTH_KEY;
 
         if (!service_auth_key) {
